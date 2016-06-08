@@ -28,7 +28,6 @@
 <script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer></script>
 <script type="text/javascript">
 var map;
-var interval;
 var markers = [];
 var tracking = false;
 var current_user = {{ user|safe }};
@@ -86,10 +85,9 @@ function trackUsers() {
 			displayMarkers();
 			map.setCenter(latlng);
 		}
-		console.log(tracking);
 		if(!tracking) {
 			tracking = true;
-			interval = setInterval(function() {
+			setTimeout(function() {
 				trackUsers();
 			}, 5000);
 		}
@@ -116,7 +114,7 @@ $('#users-list').on('click', 'a', function() {
 $(document).on("click", "#btn-stop", function(){
 	$(this).parent().toggleClass('active');
 	tracking = !tracking;
-	clearInterval(interval);
+	trackUsers();
 })
 </script>
 </body>

@@ -17,8 +17,8 @@
 		</thead>
 		<tbody>
 			<tr>
-				<td id="lat">12.34567890</td>
-				<td id="lng">123.4567890</td>
+				<td id="lat"></td>
+				<td id="lng"></td>
 			</tr>
 		</tbody>
 	</table>
@@ -33,20 +33,23 @@ function updateGeolocation(lat, lng) {
 	$.post('/api/geodata', payload, function(data) {
 		$('#lat').text(lat);
 		$('#lng').text(lng);
+		setTimeout(function() {
+			getLocation();
+		}, 5000);
 	}, 'json');
 }
-$(document).ready(function() {
+function getLocation() {
 	if("geolocation" in navigator) {
-		var interval = setInterval(function() {
-			navigator.geolocation.getCurrentPosition(function(position) {
-				console.log(position);
-				updateGeolocation(position.coords.latitude, position.coords.longitude);
-			});
-		}, 5000);
+		navigator.geolocation.getCurrentPosition(function(position) {
+			updateGeolocation(position.coords.latitude, position.coords.longitude);
+		});
 	} else {
 		alert('Sorry, Geolocation is not available.')
 		window.location.href = '/logout';
 	}
+}
+$(document).ready(function() {
+	getLocation();
 })
 </script>
 </body>
