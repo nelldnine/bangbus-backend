@@ -89,7 +89,8 @@ class GeodataAPIHandler(BaseHandler):
                 query = Geodata.query()
                 query = query.filter(Geodata.user == user)
                 geodata = query.get()
-                resp.append(geodata.to_object())
+                if geodata:
+                    resp.append(geodata.to_object())
             self.response.write(respond_json(resp))
             return
         else:
