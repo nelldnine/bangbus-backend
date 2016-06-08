@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Dashboard</title>
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/style.css">
+</head>
+<body>
+<div class="navbar navbar-static-top navbar-inverse">
+	<div class="container-fluid">
+		<a href="/dashboarad" class="navbar-brand">Dashboard</a>
+		<div class="navbar-right">
+			<ul class="nav navbar-nav">
+				<li class="dropdown">
+					<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="glyphicon glyphicon-user"></i></a>
+					<ul class="dropdown-menu" id="users-list"></ul>
+				</li>
+				<li><a href="#" id="btn-stop"><i class="glyphicon glyphicon-off"></i></a></li>
+				<li><a href="/logout">Logout</a></li>
+			</ul>
+		</div>
+	</div>
+</div>
+<div id="map"></div>
+<script type="text/javascript" src="/js/jquery.min.js"></script>
+<script type="text/javascript" src="/js/bootstrap.min.js"></script>
+<script src="https://maps.googleapis.com/maps/api/js?callback=initMap" async defer></script>
+<script type="text/javascript">
+var map;
+var interval;
+var markers = [];
+var tracking = false;
+var current_user = {{ user|safe }};
+function initMap() {
+	map = new google.maps.Map(document.getElementById('map'), {
+		center: {lat: 11.5563841, lng: 113.5790874},
+		zoom: 18,
+	});
+}
+function getUsers() {
+	$.getJSON('/api/users', function(data) {
+		trackUsers();
+		for(var i = 0; i < data.data.length; i++) {
+			var user = data.data[i];
+			if(current_user.email == user.email) {
+				continue;
+			}
+			$('#users-list').append($('<li>').html($('<a>', {text: user.email, href: '#', 'data-id': user.id})));
+		}
+		trackUsers();
+	});
+}
+function trackUsers() {
+	var users = [current_user.id];
+	var el = $('#users-list li a.bg-success');
+	for(var i = 0; i < el.length; i++) {
+		var user = el[i];
+		var id = $(user).data('id');
+		users.push(id);
+	}
+	$.getJSON('/api/geodata', {user: users.join(',')}, function(data) {
+		clearMarkers();
+		if(data.length) {
+			for(var i = 0; i < data.length; i++) {
+				var geodata = data[i];
+				var latlng = {lat: geodata.lat, lng: geodata.lng};
+				var marker = new google.maps.Marker({
+				    position: latlng,
+				    title: geodata.user.email
+				});
+				markers.push(marker);
+				displayMarkers();
+				if(geodata.user == current_user.id) {
+					map.setCenter(latlng);
+				}
+			}
+		}
+		else {
+			var latlng = {lat: data.lat, lng: data.lng};
+			var marker = new google.maps.Marker({
+			    position: latlng,
+			    title: data.user.email
+			});
+			markers.push(marker);
+			displayMarkers();
+			map.setCenter(latlng);
+		}
+		console.log(tracking);
+		if(!tracking) {
+			tracking = true;
+			interval = setInterval(function() {
+				trackUsers();
+			}, 5000);
+		}
+	});
+}
+function clearMarkers() {
+	for(var i = 0; i < markers.length; i++) {
+		markers[i].setMap(null);
+	}
+	markers = [];
+}
+function displayMarkers() {
+	for(var i = 0; i < markers.length; i++) {
+		markers[i].setMap(map);
+	}
+}
+$(document).ready(function() {
+	getUsers();
+});
+$('#users-list').on('click', 'a', function() {
+	$(this).toggleClass('bg-success');
+	trackUsers();
+});
+$(document).on("click", "#btn-stop", function(){
+	$(this).parent().toggleClass('active');
+	tracking = !tracking;
+	clearInterval(interval);
+})
+</script>
+</body>
+</html>

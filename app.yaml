@@ -1,0 +1,25 @@
+application: bangbus-demo
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: true
+
+handlers:
+- url: /css
+  static_dir: frontend/css
+
+- url: /fonts
+  static_dir: frontend/fonts
+
+- url: /js
+  static_dir: frontend/js
+
+- url: /images
+  static_dir: frontend/images
+
+- url: /.*
+  script: main.application
+
+libraries:
+- name: jinja2
+  version: latest

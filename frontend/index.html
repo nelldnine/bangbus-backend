@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Broadcast Location</title>
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/css/style.css">
+</head>
+<body>
+<div class="a">
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Latitude</th>
+				<th>Longitude</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td id="lat">12.34567890</td>
+				<td id="lng">123.4567890</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+<div class="text-center"><a href="/logout">Logout</a></div>
+<script type="text/javascript" src="/js/jquery.min.js"></script>
+<script type="text/javascript">
+function updateGeolocation(lat, lng) {
+	var payload = {}
+	payload['lat'] = lat;
+	payload['lng'] = lng;
+	$.post('/api/geodata', payload, function(data) {
+		$('#lat').text(lat);
+		$('#lng').text(lng);
+	}, 'json');
+}
+$(document).ready(function() {
+	if("geolocation" in navigator) {
+		var interval = setInterval(function() {
+			navigator.geolocation.getCurrentPosition(function(position) {
+				console.log(position);
+				updateGeolocation(position.coords.latitude, position.coords.longitude);
+			});
+		}, 5000);
+	} else {
+		alert('Sorry, Geolocation is not available.')
+		window.location.href = '/logout';
+	}
+})
+</script>
+</body>
+</html>
