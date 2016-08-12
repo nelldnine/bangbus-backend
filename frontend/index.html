@@ -45,7 +45,15 @@ function getLocation() {
 		if(init) {
 			navigator.geolocation.getCurrentPosition(function(position) {
 				updateGeolocation(position.coords.latitude, position.coords.longitude);
-			});
+			},function error(msg){
+
+                alert('Please enable your GPS position future.');  
+
+      		},{
+      			maximumAge:600000,
+      			timeout:5000,
+      			enableHighAccuracy: true
+      		});
 		}
 		else {
 			var lat = parseFloat($('#lat').text()) + 0.000025,
