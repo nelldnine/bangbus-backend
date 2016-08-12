@@ -82,25 +82,40 @@ class GeodataAPIHandler(BaseHandler):
         if 'user' not in self.session:
             self.redirect('/login?r=/api/geodata')
         user = self.request.get('user')
-        if ',' in user:
-            users = user.split(',')
-            resp = []
-            for user in users:
-                query = Geodata.query()
-                query = query.filter(Geodata.user == user)
-                geodata = query.get()
-                if geodata:
-                    resp.append(geodata.to_object())
-            self.response.write(respond_json(resp))
-            return
-        else:
-            geodata = Geodata().query(Geodata.user == user).get()
-            if not geodata:
-                resp = {'message': 'User not found'}
+        if user:
+            if ',' in user:
+                users = user.split(',')
+                resp = []
+                for user in users:
+                    query = Geodata.query()
+                    query = query.filter(Geodata.user == user)
+                    geodata = query.get()
+                    if geodata:
+                        resp.append(geodata.to_object())
                 self.response.write(respond_json(resp))
+                return
             else:
-                self.response.write(respond_json(geodata.to_object()))
-            return
+                geodata = Geodata.query(Geodata.user == user).get()
+                if not geodata:
+                    resp = {'message': 'User not found'}
+                    self.response.write(respond_json(resp))
+                else:
+                    self.response.write(respond_json(geodata.to_object()))
+        else:
+            data = {}
+            data['data'] = []
+            c = self.request.get('cursor')
+            if c:
+                c = Cursor(urlsafe=c)
+                geodata, cursor, more = Geodata.query().fetch_page(25, start_cursor=c)
+            else:
+                geodata, cursor, more = Geodata.query().fetch_page(25)
+            if more:
+                data['cursor'] = cursor.urlsafe()
+            for geodatum in geodata:
+                data['data'].append(geodatum.to_object())
+            self.response.write(respond_json(data))
+        return
 
     def post(self):
         if 'user' not in self.session:
@@ -198,9 +213,22 @@ class RegisterHandler(BaseHandler):
         return
 
 
+class PassengerHandler(BaseHandler):
+    def get(self):
+        self.tv['buses'] = []
+        buses, cursor, more = Geodata.query().fetch_page(25)
+        for bus in buses:
+            self.tv['buses'].append(bus.to_object())
+        self.tv['cursor'] = cursor.urlsafe()
+        self.tv['user'] = {}
+        self.render('passenger.html')
+        return
+
+
 application = webapp2.WSGIApplication([
     ('/', IndexHandler),
     ('/dashboard', DashboardHandler),
+    ('/passenger', PassengerHandler),
     ('/api/geodata', GeodataAPIHandler),
     ('/api/users/(.*)', UserAPIHandler),
     ('/api/users', UserAPIHandler),

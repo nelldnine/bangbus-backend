@@ -26,8 +26,10 @@
 <div class="text-center"><a href="/logout">Logout</a></div>
 <script type="text/javascript" src="/js/jquery.min.js"></script>
 <script type="text/javascript">
+var init = true;
 function updateGeolocation(lat, lng) {
 	var payload = {}
+	// init = false;
 	payload['lat'] = lat;
 	payload['lng'] = lng;
 	$.post('/api/geodata', payload, function(data) {
@@ -40,9 +42,16 @@ function updateGeolocation(lat, lng) {
 }
 function getLocation() {
 	if("geolocation" in navigator) {
-		navigator.geolocation.getCurrentPosition(function(position) {
-			updateGeolocation(position.coords.latitude, position.coords.longitude);
-		});
+		if(init) {
+			navigator.geolocation.getCurrentPosition(function(position) {
+				updateGeolocation(position.coords.latitude, position.coords.longitude);
+			});
+		}
+		else {
+			var lat = parseFloat($('#lat').text()) + 0.000025,
+			lng = parseFloat($('#lng').text()) + 0.000025;
+			updateGeolocation(lat, lng);
+		}
 	} else {
 		alert('Sorry, Geolocation is not available.')
 		window.location.href = '/logout';
